@@ -22,7 +22,7 @@ public class PlainNioEchoServer {
     }
 
     public void serve(int port) throws IOException {
-        System.out.println("Listening for connections on port " + port);
+        System.out.println("Listening for connections on port " + port + "\n");
         ServerSocketChannel serverChannel = ServerSocketChannel.open();
         ServerSocket ss = serverChannel.socket();
         InetSocketAddress address = new InetSocketAddress(port);
@@ -60,14 +60,29 @@ public class PlainNioEchoServer {
                                 ByteBuffer.allocate(100));
                     }
                     // #8 Check for SelectedKey for read
-                    if (key.isReadable()) {
+                    if (key.isValid() && key.isReadable()) {
                         SocketChannel client = (SocketChannel) key.channel();
                         ByteBuffer output = (ByteBuffer) key.attachment();
+                        
+                        // 更多参考:
+                        // 关于关闭服务器端连接：http://www.cnblogs.com/549294286/p/3947751.html
+                        // Java NIO开发需要注意的陷阱：http://www.cnblogs.com/pingh/p/3224990.html
+                        // Java NIO服务器，远程主机强迫关闭了一个现有的连接：http://blog.csdn.net/abc_key/article/details/29295569
+                        
                         // #9 Read data to ByteBuffer
-                        client.read(output);
+                        int r = client.read(output);
+                        if(r == -1) {
+                            System.out.println("Server_Close：" + client + "\n");
+                            key.cancel();
+                            client.socket().close();
+                            client.close();
+                        } 
+                        if(r > 0) {
+                            System.out.print("Accepted data " + new String(output.array()));
+                        }
                     }
                     // #10 Check for SelectedKey for write
-                    if (key.isWritable()) {
+                    if (key.isValid() && key.isWritable()) {
                         SocketChannel client = (SocketChannel) key.channel();
                         ByteBuffer output = (ByteBuffer) key.attachment();
                         output.flip();

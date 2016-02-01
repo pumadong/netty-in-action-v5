@@ -13,7 +13,7 @@ import java.net.Socket;
 public class PlainEchoServer {
     public static void main(String[] args) throws IOException {
         PlainEchoServer plainEchoServer = new PlainEchoServer();
-        System.out.println("PlainEchoServer start at 8888...");
+        System.out.println("PlainEchoServer start at 8888..." + "\n");
         plainEchoServer.serve(8888);
     }
 
@@ -29,22 +29,36 @@ public class PlainEchoServer {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
+                        BufferedReader reader = null;
+                        PrintWriter writer = null;
                         try {
-                            BufferedReader reader = new BufferedReader(new InputStreamReader(
+                            reader = new BufferedReader(new InputStreamReader(
                                     clientSocket.getInputStream()));
-                            PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true);
+                            writer = new PrintWriter(clientSocket.getOutputStream(), true);
                             // #4 Read data from client and write it back，while(true)，会一直读取，直到我们认为应该结束读取
                             while (true) {
                                 String data = reader.readLine();
-//                                if (data != null) {
-                                    System.out.println("Accepted data " + data + "\n");
-//                                }
+                                // 小议socket关闭：http://blog.whyun.com/posts/socket/
+                                // Java Socket 编程：http://haohaoxuexi.iteye.com/blog/1979837
+                                if(data == null) {
+                                    break;
+                                }
+                                System.out.println("Accepted data " + data);
                                 writer.println(data);
                                 writer.flush();
                             }
                         } catch (IOException e) {
                             e.printStackTrace();
+
+                        } finally {
                             try {
+                                if(reader != null) {
+                                    reader.close();
+                                }
+                                if(writer != null) {
+                                    writer.close();
+                                }
+                                System.out.println("Server_Close：" + clientSocket + "\n");
                                 clientSocket.close();
                             } catch (IOException ex) {
                                 // ignore on close

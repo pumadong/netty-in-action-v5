@@ -14,7 +14,7 @@ import java.net.Socket;
  */
 public class SocketClient {
     public static void main(String[] args) throws InterruptedException {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 2; i++) {
             call("Hello..." + i);
         }
     }
@@ -30,10 +30,20 @@ public class SocketClient {
             // 同服务器原理一样
             br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             pw = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())));
+            
             pw.println(command);
             pw.flush();
             String str = br.readLine();
             System.out.println("Client_Receive:" + str);
+            
+            
+            Thread.sleep(1000*2);
+            
+            pw.println(command);
+            pw.flush();
+            str = br.readLine();
+            System.out.println("Client_Receive:" + str);
+            
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
